@@ -11,9 +11,9 @@ import reframe.utility.sanity as sn
 # the gpu lists are tuples of (partition, max_cores_per_gpu)
 PARTITION_MAP = {
     'hydra': {
-        'gpu': [('ampere_gpu', 16), ('pascal_gpu', 12)],
-        'smp': ['skylake', 'zen4'],
-        'mpi': ['skylake_mpi'],
+        'gpu': [('hopper_gpu', 24), ('ampere_gpu', 16), ('pascal_gpu', 12)],
+        'smp': ['zen4'],
+        'mpi': ['zen5_mpi'],
     },
     'manticore': {
         'gpu': [('ampere_gpu', 2)],
@@ -21,14 +21,14 @@ PARTITION_MAP = {
         'mpi': ['zen3_mpi'],
     },
     'anansi': {
-        'gpu': [('pascal_gpu', 16)],
-        'smp': ['pascal_gpu'],
-        'mpi': ['pascal_gpu'],
+        'gpu': [('ada_gpu', 32), ('pascal_gpu', 16)],
+        'smp': ['ada_gpu', 'pascal_gpu'],
+        'mpi': ['ada_gpu', 'pascal_gpu'],
     },
 }
 
 MAX_CORES_PER_NODE = {
-    'hydra': 64,
+    'hydra': 128,
     'manticore': 4,
 }
 
@@ -304,7 +304,7 @@ class WarningMultiGPU(SlurmTestBase):
     def assert_warning(self):
         return sn.all([
             sn.assert_found(
-                r'Please use .*--ntasks-per-node.* and .*--gpus-per-node',
+                r'Please use .*--ntasks-per-gpu.* and .*--gpus-per-node',
                 self.stderr,
                 self.descr
             ),
