@@ -56,6 +56,8 @@ if os.getenv('REFRAME_QUIET_MODULE_LOAD', '').lower() in ['yes', '1', 'true']:
         "alias module='module -q'",
     ]
 
+scheduler = 'slurm'
+
 sched_options = {'use_nodes_option': True}
 
 site_configuration = {
@@ -103,7 +105,7 @@ site_configuration = {
             'partitions': [
                 {
                     'name': 'skylake-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=skylake,skylake_mpi'],
@@ -115,7 +117,7 @@ site_configuration = {
                 },
                 {
                     'name': 'skylake-sn-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=skylake,skylake_mpi'],
@@ -127,7 +129,7 @@ site_configuration = {
                 },
                 {
                     'name': 'skylake-mn-mpi-ib',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=skylake_mpi'],
@@ -139,7 +141,7 @@ site_configuration = {
                 },
                 {
                     'name': 'skylake-mn-mpi-eth',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=skylake'],
@@ -151,7 +153,7 @@ site_configuration = {
                 },
                 {
                     'name': 'broadwell-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=broadwell'],
@@ -163,7 +165,7 @@ site_configuration = {
                 },
                 {
                     'name': 'broadwell-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=broadwell'],
@@ -175,7 +177,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen4-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen4'],
@@ -187,7 +189,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen4-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen4'],
@@ -199,7 +201,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen5-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen5_mpi'],
@@ -211,7 +213,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen5-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen5_mpi'],
@@ -223,7 +225,7 @@ site_configuration = {
                 },
                 {
                     'name': 'broadwell-pascal-sn-gpu',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=pascal_gpu'],
@@ -241,7 +243,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen2-ampere-sn-gpu',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=ampere_gpu'],
@@ -259,7 +261,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen2-ampere-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=ampere_gpu'],
@@ -271,7 +273,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen2-ampere-mpi-gpu',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=ampere_gpu'],
@@ -302,7 +304,7 @@ site_configuration = {
             'partitions': [
                 {
                     'name': 'broadwell-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=pascal_gpu'],
@@ -314,7 +316,7 @@ site_configuration = {
                 },
                 {
                     'name': 'broadwell-pascal-sn-gpu',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=pascal_gpu'],
@@ -346,7 +348,7 @@ site_configuration = {
             'partitions': [
                 {
                     'name': 'zen3-sn',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen3'],
@@ -358,7 +360,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen3-mpi',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=zen3_mpi'],
@@ -370,7 +372,7 @@ site_configuration = {
                 },
                 {
                     'name': 'zen3-ampere-sn-gpu',
-                    'scheduler': 'slurm',
+                    'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
                     'access': ['--partition=ampere_gpu'],
