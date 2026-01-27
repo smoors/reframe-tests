@@ -7,15 +7,16 @@ from datetime import date, datetime
 
 
 # check if memory in JAVA_TOOL_OPTIONS is set correctly
+# uses cgroups v2
+# only works in a job
 check_java_memory = """
 import os, re
-cgroups = open('/proc/self/cgroup', encoding='utf-8').read().splitlines()
-mem_cgroup = [x.split(':')[2] for x in cgroups if ':memory:' in x][0]
-mem_cgroup = re.sub(r'/task_[0-9]+$', '', mem_cgroup)
-mem_file = f'/sys/fs/cgroup/memory/{mem_cgroup}/memory.memsw.limit_in_bytes'
-mem_avail = open(mem_file, encoding='utf-8').read().rstrip()
+cgroup = open('/proc/self/cpuset', encoding='utf-8').read().rstrip()
+mem_file = f'/sys/fs/cgroup/{cgroup}/../../../memory.max'
+mem_alloc = open(mem_file, encoding='utf-8').read().rstrip()
 mem_java = os.environ['JAVA_TOOL_OPTIONS'].replace('-Xmx', '')
-print(int(int(mem_avail) * 0.8) == int(mem_java))
+print(int(int(mem_alloc) * 0.8), int(mem_java))
+print(int(int(mem_alloc) * 0.8) == int(mem_java))
 """
 
 OLDEST_TCGEN = 2022
