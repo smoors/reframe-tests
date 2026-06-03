@@ -9,7 +9,7 @@ else:
     syslog_level = 'warning'
 
 try:
-    repo = git.Repo(os.path.dirname(os.path.dirname(__file__)))
+    repo = git.Repo(os.path.dirname(os.path.dirname(__file__)), odbt=git.GitDB)
     commit = f'{datetime.fromtimestamp(repo.head.commit.committed_date):%Y%m%d.%H%M}'
 except Exception:
     commit = ''
@@ -34,18 +34,18 @@ perf_logging_format = 'reframe: ' + '|'.join([
 
 environs_cpu = [
     'default',
-    'foss-2022a',
-    'intel-2022a',
     'foss-2023a',
     'intel-2023a',
     'foss-2024a',
     'intel-2024a',
+    'foss-2025a',
+    'intel-2025a',
 ]
 
 environs_gpu = [
-    'foss-2022a-cuda',
     'foss-2023a-cuda',
     'foss-2024a-cuda',
+    'foss-2025a-cuda',
 ]
 
 # workaround for old modules which emit a warning upon load and non-zero exit code
@@ -104,78 +104,6 @@ site_configuration = {
             ],
             'partitions': [
                 {
-                    'name': 'skylake-sn',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=skylake,skylake_mpi'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in Skylake nodes',
-                    'max_jobs': 10,
-                    'launcher': 'local',
-                },
-                {
-                    'name': 'skylake-sn-mpi',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=skylake,skylake_mpi'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node MPI jobs in Skylake nodes',
-                    'max_jobs': 10,
-                    'launcher': 'srun',
-                },
-                {
-                    'name': 'skylake-mn-mpi-ib',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=skylake_mpi'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'multi-node MPI jobs in Skylake nodes with infiniband',
-                    'max_jobs': 1,
-                    'launcher': 'srun',
-                },
-                {
-                    'name': 'skylake-mn-mpi-eth',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=skylake'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'multi-node MPI jobs in Skylake nodes without infiniband',
-                    'max_jobs': 1,
-                    'launcher': 'srun',
-                },
-                {
-                    'name': 'broadwell-sn',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=broadwell'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in Broadwell nodes',
-                    'max_jobs': 10,
-                    'launcher': 'local',
-                },
-                {
-                    'name': 'broadwell-mpi',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=broadwell'],
-                    'environs': environs_cpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'MPI jobs in Broadwell nodes',
-                    'max_jobs': 10,
-                    'launcher': 'srun',
-                },
-                {
                     'name': 'zen4-sn',
                     'scheduler': scheduler,
                     'sched_options': sched_options,
@@ -222,24 +150,7 @@ site_configuration = {
                     'descr': 'MPI jobs in Zen5 nodes',
                     'max_jobs': 1,
                     'launcher': 'srun',
-                },
-                {
-                    'name': 'broadwell-pascal-sn-gpu',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=pascal_gpu'],
-                    'environs': environs_cpu + environs_gpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in Broadwell nodes with Pascal P100 GPUs',
-                    'max_jobs': 1,
-                    'resources': [
-                        {
-                            'name': 'gpu',
-                            'options': ['--gpus-per-node={num_gpus_per_node}'],
-                        },
-                    ],
-                    'launcher': 'local',
+                    'env_vars': [['PMIX_MCA_gds', 'hash']],
                 },
                 {
                     'name': 'zen2-ampere-sn-gpu',
@@ -303,33 +214,15 @@ site_configuration = {
             ],
             'partitions': [
                 {
-                    'name': 'broadwell-sn',
+                    'name': 'zen5-ada-sn-gpu',
                     'scheduler': scheduler,
                     'sched_options': sched_options,
                     'modules': [],
-                    'access': ['--partition=pascal_gpu'],
+                    'access': ['--partition=ada_gpu'],
                     'environs': environs_cpu,
                     'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in Broadwell nodes',
-                    'max_jobs': 1,
-                    'launcher': 'local',
-                },
-                {
-                    'name': 'broadwell-pascal-sn-gpu',
-                    'scheduler': scheduler,
-                    'sched_options': sched_options,
-                    'modules': [],
-                    'access': ['--partition=pascal_gpu'],
-                    'environs': environs_cpu + environs_gpu,
-                    'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in Broadwell nodes with GTX 1080 Ti GPUs',
-                    'max_jobs': 1,
-                    'resources': [
-                        {
-                            'name': 'gpu',
-                            'options': ['--gpus-per-node={num_gpus_per_node}'],
-                        },
-                    ],
+                    'descr': 'single-node jobs in Zen5 nodes with Ada GPUs',
+                    'max_jobs': 10,
                     'launcher': 'local',
                 },
             ],
@@ -378,7 +271,7 @@ site_configuration = {
                     'access': ['--partition=ampere_gpu'],
                     'environs': environs_cpu + environs_gpu,
                     'prepare_cmds': prepare_cmds,
-                    'descr': 'single-node jobs in (virtualized) Zen3 nodes with (fake!) Ampere A100 GPUs',
+                    'descr': 'single-node jobs in (virtualized) Zen3 nodes with (fake) Ampere A100 GPUs',
                     'max_jobs': 1,
                     'resources': [
                         {
@@ -388,25 +281,29 @@ site_configuration = {
                     ],
                     'launcher': 'local',
                 },
+                {
+                    'name': 'zen3-ampere-mpi-gpu',
+                    'scheduler': scheduler,
+                    'sched_options': sched_options,
+                    'modules': [],
+                    'access': ['--partition=ampere_gpu'],
+                    'environs': environs_cpu + environs_gpu,
+                    'prepare_cmds': prepare_cmds,
+                    'descr': 'MPI jobs in (virtualized) Zen3 nodes with (fake) Ampere A100 GPUs',
+                    'max_jobs': 1,
+                    'resources': [
+                        {
+                            'name': 'gpu',
+                            'options': ['--gpus-per-node={num_gpus_per_node}'],
+                        },
+                    ],
+                    'launcher': 'srun',
+                },
             ],
         },
     ],
     'environments': [
         {'name': 'default', 'cc': 'gcc', 'cxx': 'g++', 'ftn': 'gfortran'},
-        {
-            'name': 'foss-2022a',
-            'modules': ['foss/2022a', 'Autotools/20220317-GCCcore-11.3.0'],
-            'cc': 'mpicc',
-            'cxx': 'mpicxx',
-            'ftn': 'mpif90',
-        },
-        {
-            'name': 'intel-2022a',
-            'modules': ['intel/2022a', 'Autotools/20220317-GCCcore-11.3.0'],
-            'cc': 'mpiicc',
-            'cxx': 'mpiicpc',
-            'ftn': 'mpiifort',
-        },
         {
             'name': 'foss-2023a',
             'modules': ['foss/2023a', 'Autotools/20220317-GCCcore-12.3.0'],
@@ -420,6 +317,13 @@ site_configuration = {
             'cc': 'mpiicc',
             'cxx': 'mpiicpc',
             'ftn': 'mpiifort',
+        },
+        {
+            'name': 'foss-2023a-cuda',
+            'modules': ['foss/2023a', 'CUDA/12.1.1', 'Autotools/20220317-GCCcore-12.3.0'],
+            'cc': 'mpicc',
+            'cxx': 'mpicxx',
+            'ftn': 'mpif90',
         },
         {
             'name': 'foss-2024a',
@@ -436,22 +340,29 @@ site_configuration = {
             'ftn': 'mpiifx',
         },
         {
-            'name': 'foss-2022a-cuda',
-            'modules': ['foss/2022a', 'CUDA/11.7.0', 'Autotools/20220317-GCCcore-11.3.0'],
-            'cc': 'mpicc',
-            'cxx': 'mpicxx',
-            'ftn': 'mpif90',
-        },
-        {
-            'name': 'foss-2023a-cuda',
-            'modules': ['foss/2023a', 'CUDA/12.1.1', 'Autotools/20220317-GCCcore-12.3.0'],
-            'cc': 'mpicc',
-            'cxx': 'mpicxx',
-            'ftn': 'mpif90',
-        },
-        {
             'name': 'foss-2024a-cuda',
             'modules': ['foss/2024a', 'CUDA/12.6.0', 'Autotools/20231222-GCCcore-13.3.0'],
+            'cc': 'mpicc',
+            'cxx': 'mpicxx',
+            'ftn': 'mpif90',
+        },
+        {
+            'name': 'foss-2025a',
+            'modules': ['foss/2025a', 'Autotools/20240712-GCCcore-14.2.0'],
+            'cc': 'mpicc',
+            'cxx': 'mpicxx',
+            'ftn': 'mpif90',
+        },
+        {
+            'name': 'intel-2025a',
+            'modules': ['intel/2025a', 'Autotools/20240712-GCCcore-14.2.0'],
+            'cc': 'mpiicx',
+            'cxx': 'mpiicpx',
+            'ftn': 'mpiifx',
+        },
+        {
+            'name': 'foss-2025a-cuda',
+            'modules': ['foss/2025a', 'CUDA/12.8.0', 'Autotools/20240712-GCCcore-14.2.0'],
             'cc': 'mpicc',
             'cxx': 'mpicxx',
             'ftn': 'mpif90',
@@ -459,7 +370,7 @@ site_configuration = {
     ],
     'logging': [
         {
-            'perflog_compat': True,
+            'perflog_multiline': True,
             'level': 'debug',
             'handlers': [
                 {

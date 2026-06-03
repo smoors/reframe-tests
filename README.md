@@ -36,6 +36,11 @@ reframe-tests/run.sh -c osu --partitions skylake-mn-mpi-ib
 reframe-tests/run.sh -c gromacs_bench --partition zen2-ampere-sn-gpu -n GMXBenchMEMSingleNodeGPU
 # Slurm tests as jobs in compute nodes
 reframe-tests/run.sh -c slurm
+# sofia-specific Slurm tests on manticore
+# tests that should run in a job
+reframe-tests/run.sh -c slurm_sofia --system manticore --tag job
+# tests that should run locally
+reframe-tests/run.sh -c slurm_sofia --system local --tag local
 ```
 
 Location of ouput and log files

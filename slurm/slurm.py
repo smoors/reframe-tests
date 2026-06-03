@@ -68,15 +68,21 @@ class SlurmTestBase(rfm.RunOnlyRegressionTest):
     num_tasks_per_node = 1
     num_cpus_per_task = 1
 
+    @run_after('setup')
+    def get_system(self):
+        system = rt.runtime().system.name
+        if system == 'local':
+            self.system = os.getenv('VSC_DEFAULT_CLUSTER_MODULE')
+        else:
+            self.system = system
+
 
 @rfm.simple_test
 class Sinfo(SlurmTestBase):
     descr += ": sinfo partition"
     executable = "sinfo -s --noheader -o '%P'"
-
-    @run_after('setup')
-    def get_system(self):
-        self.system = rt.runtime().system.name
+    tags.add('local')
+    tags.add('manticore')
 
     @sanity_function
     def assert_partitions(self):
@@ -94,11 +100,13 @@ class SinfoCluster(Sinfo):
     def set_executable(self):
         self.executable += f" --clusters {self.system}"
 
+
 @rfm.simple_test
 class SbatchCleanEnv(SlurmTestBase):
     descr += ": sbatch starts in clean environment"
     exe = 'print(os.getenv("TEST_ENVAR_OUTSIDE") is None)'
     executable = f"python3 -c 'import os;{exe}'"
+    tags.add('manticore')
 
     @sanity_function
     def assert_env(self):
@@ -115,6 +123,7 @@ class SbatchSrunCopyEnv(SlurmTestBase):
     prerun_cmds = [f'export TEST_ENVAR_INSIDE={timestamp}']
     exe = f'print(os.getenv("TEST_ENVAR_INSIDE") == "{timestamp}")'
     executable = f"srun python3 -c 'import os;{exe}'"
+    tags.add('manticore')
 
     @sanity_function
     def assert_env(self):
@@ -127,10 +136,7 @@ class SbatchSrunCopyEnv(SlurmTestBase):
 @rfm.simple_test
 class SbatchEnforceBinding(SlurmTestBase):
     descr += ": --gres-flags=enforce-binding set by default"
-
-    @run_after('setup')
-    def get_system(self):
-        self.system = rt.runtime().system.name
+    tags.add('manticore')
 
     @run_after('setup')
     def set_executable(self):
@@ -171,6 +177,7 @@ class SbatchAffinity(SlurmTestBase):
     num_tasks_per_node = 2
     num_tasks = 2
     executable = f"python3 -c '{affinity_script}'"
+    tags.add('manticore')
 
     @sanity_function
     def assert_affinity(self):
@@ -193,7 +200,8 @@ class SbatchAffinity(SlurmTestBase):
 @rfm.simple_test
 class SbatchSrunAffinity(SbatchAffinity):
     descr += ": srun affinity"
-    executable = f'srun {executable}'
+    executable = f'srun {SbatchAffinity.executable}'
+    tags.add('manticore')
 
     @sanity_function
     def assert_affinity(self):
@@ -227,16 +235,13 @@ class TaskFarmingParallel(SbatchSrunAffinity):
     affinity_script = affinity_script.replace('"', r'\"')
     srun_options = '-n 1 -N 1 --exact'
     executable = f"seq 1 2 | parallel -N0 -j $SLURM_NTASKS \"srun {srun_options} python3 -c '{affinity_script}'\""
+    tags.add('manticore')
 
 
 @rfm.simple_test
 class DefaultPartitions(SlurmTestBase):
     descr += ": default list of partitions"
     tags.add('local')
-
-    @run_after('setup')
-    def get_system(self):
-        self.system = rt.runtime().system.name
 
     @run_after('setup')
     def set_executable(self):
@@ -272,7 +277,7 @@ EOF
                 self.descr + ': singlenode partitions expected: {0}, found: {1}'
             ),
             sn.assert_eq(
-                set(x[0] for x in PARTITION_MAP[self.system]['gpu']),
+                {x[0] for x in PARTITION_MAP[self.system]['gpu']},
                 set(partitions['gpunode'].split(',')),
                 self.descr + ': gpunode partitions expected: {0}, found: {1}'
             ),
@@ -298,6 +303,7 @@ EOF
 class WarningMultiGPU(SlurmTestBase):
     descr += ": warning multi-GPU jobs without --ntasks-per-node"
     tags.add('local')
+    tags.add('manticore')
     executable = tempjob.format('--gpus-per-node=2')
 
     @sanity_function
@@ -316,6 +322,7 @@ class WarningMultiGPU(SlurmTestBase):
 class NonGPUInGPUPartition(SlurmTestBase):
     descr += ": non-GPU job in GPU partition"
     tags.add('local')
+    tags.add('manticore')
     partition = 'pascal_gpu'
     executable = tempjob.format(f'--partition={partition}')
 

@@ -1,4 +1,4 @@
-ml ReFrame/4.7.4-GCCcore-13.3.0 GitPython/3.1.43-GCCcore-13.3.0
+ml ReFrame/4.9.1-GCCcore-14.2.0 GitPython/3.1.45-GCCcore-14.2.0
 
 export REFRAME_HOME=$PWD
 echo REFRAME_HOME=$REFRAME_HOME

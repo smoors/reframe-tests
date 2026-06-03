@@ -26,7 +26,7 @@ parser.add_argument('-c', '--checkpath', dest='checkpath', required=True,
                     help='path (relative to this script) of test directory or script')
 parser.add_argument('-n', '--name', dest='name', action='append',
                     help='check name')
-parser.add_argument('--system', dest='system', choices=['anansi', 'hydra', 'local', 'manticore'],
+parser.add_argument('--system', dest='system', choices=['anansi', 'hydra', 'local', 'manticore', 'sofia'],
                     default='hydra', help='run tests in given cluster')
 parser.add_argument('--partitions', dest='partitions',
                     help='comma-separated list of ReFrame partitions')
@@ -44,7 +44,7 @@ tests = [
         'checkpath': 'blas-tester',
         'valid_prog_environs': ['foss-2024a', 'intel-2024a'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-sn', 'hydra:zen4-sn', 'hydra:zen5-sn'],
+            'hydra': ['hydra:zen4-sn', 'hydra:zen5-sn'],
             'manticore': ['manticore:zen3-sn'],
             'local': ['local:local'],
         },
@@ -60,12 +60,12 @@ tests = [
         'checkpath': 'cp2k_tests',
         'name': ['CP2KTestSingleNode'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-sn-mpi', 'hydra:zen4-mpi', 'hydra:zen5-mpi'],
+            'hydra': ['hydra:zen4-mpi', 'hydra:zen5-mpi'],
             'manticore': ['manticore:zen3-mpi'],
             'local': ['local:local'],
         },
         'setvar_extra': {
-            'modules': 'CP2K/2023.1-foss-2023a',
+            'modules': 'CP2K/2025.2-foss-2025a',
             'num_tasks': '4',
             'num_tasks_per_node': '4',
             'exclusive_access': 'false',
@@ -78,11 +78,11 @@ tests = [
         'checkpath': 'cp2k_tests',
         'name': ['CP2KTestMultiNode'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-mn-mpi-ib', 'hydra:zen4-mpi', 'hydra:zen5-mpi'],
+            'hydra': ['hydra:zen4-mpi', 'hydra:zen5-mpi'],
             'local': ['local:local-mpi'],
         },
         'setvar_extra': {
-            'modules': 'CP2K/2023.1-foss-2023a',
+            'modules': 'CP2K/2025.2-foss-2025a',
             'num_tasks': '4',
             'num_tasks_per_node': '1',
             'exclusive_access': 'false',
@@ -95,7 +95,7 @@ tests = [
         'checkpath': 'gromacs_bench',
         'name': ['GMXBenchMEMMultiNode'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-mn-mpi-ib', 'hydra:zen4-mpi', 'hydra:zen5-mpi'],
+            'hydra': ['hydra:zen4-mpi', 'hydra:zen5-mpi'],
             'local': ['local:local-mpi'],
         },
         'setvar_extra': {
@@ -112,7 +112,7 @@ tests = [
         'checkpath': 'gromacs_bench',
         'name': ['GMXBenchMEMSingleNode'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-sn', 'hydra:zen4-sn', 'hydra:zen5-sn'],
+            'hydra': ['hydra:zen4-sn', 'hydra:zen5-sn'],
             'manticore': ['manticore:zen3-sn'],
             'local': ['local:local'],
         },
@@ -129,7 +129,7 @@ tests = [
         'checkpath': 'gromacs_bench',
         'name': ['GMXBenchMEMSingleNodeGPU'],
         'valid_systems': {
-            'hydra': ['hydra:zen2-ampere-sn-gpu', 'hydra:broadwell-pascal-sn-gpu'],
+            'hydra': ['hydra:zen2-ampere-sn-gpu'],
             'local': ['local:local'],
         },
         'setvar_extra': {
@@ -146,7 +146,7 @@ tests = [
         'checkpath': 'ior',
         'valid_prog_environs': ['foss-2024a'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-mn-mpi-ib', 'hydra:skylake-mn-mpi-eth', 'hydra:zen5-mpi'],
+            'hydra': ['hydra:zen5-mpi'],
             'local': ['local:local-mpi'],
         },
         'setvar_extra': {
@@ -176,7 +176,7 @@ tests = [
         'checkpath': 'osu',
         'valid_prog_environs': ['foss-2024a', 'intel-2024a'],
         'valid_systems': {
-            'hydra': ['hydra:skylake-mn-mpi-ib', 'hydra:zen4-mpi', 'hydra:zen5-mpi'],
+            'hydra': ['hydra:zen4-mpi', 'hydra:zen5-mpi'],
             'manticore': ['manticore:zen3-mpi'],
             'local': ['local:local-mpi'],
         },
@@ -197,11 +197,8 @@ tests = [
         'valid_systems': {
             'hydra': ['hydra:zen4-sn'],
             'manticore': ['manticore:zen3-sn'],
-            'anansi': ['anansi:broadwell-sn'],
+            'anansi': ['anansi:zen5-ada-sn-gpu'],
             'local': ['local:local'],
-        },
-        'extra': {
-            'job-option': 'mem-per-cpu=1G',
         },
     },
     {
@@ -213,6 +210,14 @@ tests = [
         },
         'extra': {
             'job-option': 'mem-per-cpu=1G',
+        },
+    },
+    {
+        'checkpath': 'slurm_sofia',
+        'valid_systems': {
+            'sofia': ['sofia:zen4-h200-mpi-gpu'],
+            'manticore': ['manticore:zen3-ampere-sn-gpu'],
+            'local': ['local:local'],
         },
     },
 ]
