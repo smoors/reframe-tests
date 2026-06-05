@@ -63,6 +63,7 @@ tests = [
             'hydra': ['hydra:zen4-mpi', 'hydra:zen5-mpi'],
             'manticore': ['manticore:zen3-mpi'],
             'local': ['local:local'],
+            'sofia': ['sofia:zen5-mpi'],
         },
         'setvar_extra': {
             'modules': 'CP2K/2025.2-foss-2025a',
@@ -215,7 +216,7 @@ tests = [
     {
         'checkpath': 'slurm_sofia',
         'valid_systems': {
-            'sofia': ['sofia:zen4-h200-mpi-gpu'],
+            'sofia': ['sofia:zen4-h200-sn-gpu'],
             'manticore': ['manticore:zen3-ampere-sn-gpu'],
             'local': ['local:local'],
         },
@@ -250,7 +251,7 @@ else:
 name = selected.get('name', []) if not name else name
 
 cmd = [
-    'reframe --run --performance-report',
+    'reframe --performance-report',
     f'--checkpath {checkpath}',
     ' '.join([f'--name {x}' for x in name]),
     f'--system {system}',
