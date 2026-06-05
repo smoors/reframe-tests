@@ -9,7 +9,7 @@ cmds=(
     "./run.sh -c ior --partitions zen5-mpi -r"
 
     # multi-node tests
-    "./run.sh -c osu"
+    "./run.sh -c osu -r"
     "./run.sh -c gromacs_bench -n GMXBenchMEMMultiNode -r"
     "./run.sh -c cp2k_tests -n CP2KTestMultiNode -r"
 
