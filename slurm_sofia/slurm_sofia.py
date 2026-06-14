@@ -28,7 +28,7 @@ scontrol show job $SLURM_JOB_ID --json | jq -r '
 
 TEMPJOB = r"""
 jobid=$(sbatch --parsable --time=5:0 --job-name={job_name} --wrap=hostname \
-    --partition={slurm_partition} {extra})
+    --cluster={cluster} --partition={slurm_partition} {extra})
 exitcode=$?
 if [[ $exitcode -ne 0 ]]; then exit $exitcode; fi
 jobid=${{jobid%%;*}}
@@ -45,17 +45,20 @@ class SlurmSofiaBase(rfm.RunOnlyRegressionTest):
     valid_systems = required
     valid_prog_environs = required
     time_limit = '10m'
+    cluster = variable(str, value=os.getenv('VSC_DEFAULT_CLUSTER_MODULE', 'undefined'))
 
     @run_after('setup')
-    def get_system(self):
+    def get_cluster_info(self):
         system = rt.runtime().system.name
-        if system == 'local':
-            self.system = os.getenv('VSC_DEFAULT_CLUSTER_MODULE')
+        if system != 'local':
+            self.cluster = system
+
+        if self.cluster in PARTITION_MAP:
+            self.default_cpus_per_gpu = PARTITION_MAP[self.cluster]['gpu'][0][1]
+            self.gpu_partition = PARTITION_MAP[self.cluster]['gpu'][0][0]
+            self.cpu_partition = PARTITION_MAP[self.cluster]['mpi'][0][0]
         else:
-            self.system = system
-        self.default_cpus_per_gpu = PARTITION_MAP[self.system]['gpu'][0][1]
-        self.gpu_partition = PARTITION_MAP[self.system]['gpu'][0][0]
-        self.cpu_partition = PARTITION_MAP[self.system]['mpi'][0][0]
+            raise KeyError(f'Cluster {self.cluster} is not supported by this test')
 
 
 @rfm.simple_test
@@ -98,6 +101,7 @@ class SbatchNoGPUs(SlurmSofiaBaseLocal):
     @run_after('setup')
     def set_executable(self):
         self.executable = TEMPJOB.format(
+            cluster=self.cluster,
             slurm_partition=self.gpu_partition,
             job_name=self.__class__.__name__,
             extra=self.extra_job_opts)
@@ -123,6 +127,7 @@ class SbatchForbiddenCPUOptions(SlurmSofiaBaseLocal):
     @run_after('setup')
     def set_executable(self):
         self.executable = TEMPJOB.format(
+            cluster=self.cluster,
             slurm_partition=self.gpu_partition,
             job_name=self.__class__.__name__,
             extra=f"{self.extra_job_opts} --gpus-per-node=3 {self.job_opts}")
@@ -153,6 +158,7 @@ class SbatchCorrectCPUsPerGPU(SlurmSofiaBaseLocal):
         job_opts, gpus, modifier = self.job_opts
         job_opts = job_opts.format(cpus=modifier(self.default_cpus_per_gpu, gpus), gpus=gpus)
         self.executable = TEMPJOB.format(
+            cluster=self.cluster,
             slurm_partition=self.gpu_partition,
             job_name=self.__class__.__name__,
             extra=f"{self.extra_job_opts} {job_opts}")
@@ -203,6 +209,7 @@ class SbatchForbiddenCombination(SlurmSofiaBaseLocal):
     @run_after('setup')
     def set_executable(self):
         self.executable = TEMPJOB.format(
+            cluster=self.cluster,
             slurm_partition=self.gpu_partition,
             job_name=self.__class__.__name__,
             extra=f"{self.extra_job_opts} {self.job_opts}")
@@ -233,6 +240,7 @@ class SbatchForbiddenMemOptions(SlurmSofiaBaseLocal):
             slurm_partition = self.cpu_partition
 
         self.executable = TEMPJOB.format(
+            cluster=self.cluster,
             slurm_partition=slurm_partition,
             job_name=self.__class__.__name__,
             extra=f"{self.extra_job_opts} {self.job_opts}")
