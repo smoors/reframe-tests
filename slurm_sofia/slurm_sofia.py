@@ -3,7 +3,7 @@ import reframe as rfm
 import reframe.core.runtime as rt
 import reframe.utility.sanity as sn
 
-# 'gpu' lists are tuples of (partition, default_cpus_per_gpu)
+# 'gpu' lists are tuples of (partition, defcpuspergpu)
 PARTITION_MAP = {
     'sofia': {
         'gpu': [('zen4_h200', 24)],
@@ -28,7 +28,7 @@ scontrol show job $SLURM_JOB_ID --json | jq -r '
 
 TEMPJOB = r"""
 jobid=$(sbatch --parsable --time=5:0 --job-name={job_name} --wrap=hostname \
-    --cluster={cluster} --partition={slurm_partition} {extra})
+    --clusters={cluster} --partition={slurm_partition} {extra})
 exitcode=$?
 if [[ $exitcode -ne 0 ]]; then exit $exitcode; fi
 jobid=${{jobid%%;*}}
@@ -46,19 +46,24 @@ class SlurmSofiaBase(rfm.RunOnlyRegressionTest):
     valid_prog_environs = required
     time_limit = '10m'
     cluster = variable(str, value=os.getenv('VSC_DEFAULT_CLUSTER_MODULE', 'undefined'))
+    if cluster in PARTITION_MAP:
+        defcpuspergpu = PARTITION_MAP[cluster]['gpu'][0][1]
+        gpu_partition = PARTITION_MAP[cluster]['gpu'][0][0]
+        cpu_partition = PARTITION_MAP[cluster]['mpi'][0][0]
+    else:
+        raise KeyError(f'Cluster {cluster} is not supported by this test')
 
     @run_after('setup')
     def get_cluster_info(self):
         system = rt.runtime().system.name
         if system != 'local':
             self.cluster = system
-
-        if self.cluster in PARTITION_MAP:
-            self.default_cpus_per_gpu = PARTITION_MAP[self.cluster]['gpu'][0][1]
-            self.gpu_partition = PARTITION_MAP[self.cluster]['gpu'][0][0]
-            self.cpu_partition = PARTITION_MAP[self.cluster]['mpi'][0][0]
-        else:
-            raise KeyError(f'Cluster {self.cluster} is not supported by this test')
+            if self.cluster in PARTITION_MAP:
+                self.defcpuspergpu = PARTITION_MAP[self.cluster]['gpu'][0][1]
+                self.gpu_partition = PARTITION_MAP[self.cluster]['gpu'][0][0]
+                self.cpu_partition = PARTITION_MAP[self.cluster]['mpi'][0][0]
+            else:
+                raise KeyError(f'Cluster {self.cluster} is not supported by this test')
 
 
 @rfm.simple_test
@@ -78,7 +83,7 @@ class SbatchDefaultCPUPerGPU(SlurmSofiaBase):
 
     @sanity_function
     def assert_allocation(self):
-        cpus = self.gpus * self.default_cpus_per_gpu
+        cpus = self.gpus * self.defcpuspergpu
         return sn.all([
             sn.assert_found(rf'^cpus = {cpus}$', self.stdout, self.descr),
             sn.assert_found(rf'^gpus = {self.gpus}$', self.stdout, self.descr),
@@ -144,24 +149,38 @@ class SbatchForbiddenCPUOptions(SlurmSofiaBaseLocal):
 @rfm.simple_test
 class SbatchCorrectCPUsPerGPU(SlurmSofiaBaseLocal):
     descr += ": requesting correct #CPU cores per GPU"
-    job_opts = parameter([
-        ['--cpus-per-gpu={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x],
-        ['--ntasks-per-gpu={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x],
-        ['--ntasks-per-node={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x * y],
-        ['--ntasks-per-node={cpus} --nodes=2 --gpus-per-node={gpus}', 2, lambda x, y: x * y],
-        ['--ntasks-per-node={cpus} --gpus=4 --gpus-per-node={gpus}', 2, lambda x, y: x * y],
-        ['--ntasks={cpus} --nodes=1 --gpus-per-node={gpus}', 2, lambda x, y: x * y],
-    ], fmt=lambda x: x[0])
+    gpuspernode = 2
+    nodes = 2
+    cpuspergpu = SlurmSofiaBase.defcpuspergpu
+    cpuspernode = gpuspernode * SlurmSofiaBase.defcpuspergpu
+    cpus = cpuspernode * nodes
+    gpus = gpuspernode * nodes
+
+    opts = [
+        '--cpus-per-gpu={cpuspergpu} --gpus-per-node={gpuspernode}',
+        '--ntasks-per-gpu={cpuspergpu} --gpus-per-node={gpuspernode}',
+        '--ntasks-per-node={cpuspernode} --gpus-per-node={gpuspernode}',
+        '--ntasks-per-node={cpuspernode} --nodes={nodes} --gpus-per-node={gpuspernode}',
+        '--ntasks-per-node=1 --cpus-per-task={cpuspernode} --nodes={nodes} --gpus-per-node={gpuspernode}',
+        '--ntasks-per-node={cpuspernode} --gpus={gpus} --gpus-per-node={gpuspernode}',
+        '--ntasks={cpuspernode} --nodes=1 --gpus-per-node={gpuspernode}',
+        '--ntasks-per-node={cpuspernode} --ntasks={cpus} --gpus-per-node={gpuspernode}',
+    ]
+
+    # cannot use a list comprehension in the class body
+    _opts = []
+    for x in opts:
+        _opts.append(x.format(**locals()))
+
+    job_opts = parameter(_opts)
 
     @run_after('setup')
     def set_executable(self):
-        job_opts, gpus, modifier = self.job_opts
-        job_opts = job_opts.format(cpus=modifier(self.default_cpus_per_gpu, gpus), gpus=gpus)
         self.executable = TEMPJOB.format(
             cluster=self.cluster,
             slurm_partition=self.gpu_partition,
             job_name=self.__class__.__name__,
-            extra=f"{self.extra_job_opts} {job_opts}")
+            extra=f"{self.extra_job_opts} {self.job_opts}")
 
     @sanity_function
     def assert_allocation(self):
@@ -174,19 +193,24 @@ class SbatchCorrectCPUsPerGPU(SlurmSofiaBaseLocal):
 
 @rfm.simple_test
 class SbatchWrongCPUsPerGPU(SbatchCorrectCPUsPerGPU):
-    descr += ": requesting wrong #CPU cores per GPU"
-    job_opts = parameter([
-        ['--cpus-per-gpu={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x - 1],
-        ['--ntasks-per-gpu={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x - 1],
-        ['--ntasks-per-node={cpus} --gpus-per-node={gpus}', 2, lambda x, y: x * y - 1],
-        ['--ntasks-per-node={cpus} --nodes=2 --gpus-per-node={gpus}', 2, lambda x, y: x * y - 1],
-        ['--ntasks-per-node={cpus} --gpus=4 --gpus-per-node={gpus}', 2, lambda x, y: x * y - 1],
-        ['--ntasks={cpus} --nodes=1 --gpus-per-node={gpus}', 2, lambda x, y: x * y - 1],
-    ], fmt=lambda x: x[0])
+    descr = SlurmSofiaBaseLocal.descr + ": requesting wrong #CPU cores per GPU"
+    gpuspernode = SbatchCorrectCPUsPerGPU.gpuspernode
+    nodes = SbatchCorrectCPUsPerGPU.nodes
+    cpuspergpu = SlurmSofiaBase.defcpuspergpu - 1
+    cpuspernode = gpuspernode * SlurmSofiaBase.defcpuspergpu - 1
+    cpus = cpuspernode * nodes
+    gpus = gpuspernode * nodes
+
+    # cannot use a list comprehension in the class body
+    _opts = []
+    for x in SbatchCorrectCPUsPerGPU.opts:
+        _opts.append(x.format(**locals()))
+
+    job_opts = parameter(_opts)
 
     @sanity_function
     def assert_allocation(self):
-        error_msg = f'This partition requires exactly {self.default_cpus_per_gpu} CPUs per GPU'
+        error_msg = f'This partition requires exactly {self.defcpuspergpu} CPUs per GPU'
         return sn.all([
             sn.assert_found(error_msg, self.stderr, f'error message should contain: "{error_msg}"'),
             sn.assert_eq(self.job.exitcode, 1, f'exit code should be 1, got {self.job.exitcode}'),
